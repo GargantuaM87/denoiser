@@ -2,18 +2,23 @@
 #include <cstdio>
 #include <iostream>
 #include <filesystem>
+#include <vector>
+#include "../include/libdns/FileScanner.hpp"
 
 void inspectDirectory(std::filesystem::path filePath) {
 	if(!std::filesystem::exists(filePath) or !std::filesystem::is_directory(filePath)) return;
-
+	std::vector<dns::FileInfo> files;
 	std::uint32_t regular_files = 0;
 	std::uint32_t directories = 0;
+
 	for(const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator{filePath}) {
-			if(entry.is_regular_file())
-				regular_files++;
-			else if(entry.is_directory())
-				directories++;
-			//std::cout << entry.path();
+		if(entry.is_regular_file()) {
+			dns::FileInfo file{entry.path(), entry.file_size()};
+			files.push_back(file);
+			regular_files++;
+		}
+		else if(entry.is_directory())
+			directories++;	
 	}
 
 	std::cout << "The Directory " << std::filesystem::absolute(filePath) << " has " << regular_files << " files and " << directories << " subdirectories.\n";
