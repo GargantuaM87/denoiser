@@ -13,8 +13,8 @@ void inspectDirectory(std::filesystem::path filePath) {
 
 	for(const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator{filePath}) {
 		if(entry.is_regular_file()) {
-			dns::FileInfo file{entry.path(), entry.file_size()};
-			files.push_back(file);
+			//dns::FileInfo file{entry.path(), entry.file_size()};
+			//files.push_back(file);
 			regular_files++;
 		}
 		else if(entry.is_directory())
@@ -23,6 +23,23 @@ void inspectDirectory(std::filesystem::path filePath) {
 
 	std::cout << "The Directory " << std::filesystem::absolute(filePath) << " has " << regular_files << " files and " << directories << " subdirectories.\n";
    std::cout << "There is a total of " << regular_files + directories << " entries.";
+}
+
+uintmax_t aggregateDirectory(std::filesystem::path path) {
+	// base cases
+	if(!std::filesystem::exists(path) or std::filesystem::is_empty(path))
+		return 0;
+	
+	uintmax_t directorySize = 0;
+	for(const auto& entry : std::filesystem::directory_iterator{path}) {
+		if(entry.is_regular_file()) {
+			directorySize += entry.file_size();
+		}
+		else if(entry.is_directory()) {
+			directorySize += aggregateDirectory(entry.path());
+		}
+	}
+  	return directorySize;	
 }
 
 int main(int args, const char** argv) {
@@ -42,7 +59,8 @@ int main(int args, const char** argv) {
 					 << std::filesystem::file_size(path)
 					 << " bytes\n";
 	}
-	inspectDirectory(path);
+	//inspectDirectory(path);
+	std::cout << "Total directory size: " << aggregateDirectory(path) << " bytes.";
 }
 
 

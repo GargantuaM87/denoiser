@@ -2,14 +2,19 @@
 #define FILE_SCANNER_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <vector>
 
 namespace dns {
 	struct FileInfo {
+		std::string name;
 		std::filesystem::path path;
-		std::size_t size;
+		std::uintmax_t size = 0;
+		bool isDirectory;
+		std::vector<FileInfo> children;
 
-		FileInfo(std::filesystem::path path, std::size_t size) : path(path), size(size) {}
+		FileInfo(std::string name, std::filesystem::path path, bool isDirectory, std::size_t size = 0) : name(name), path(path), size(size), isDirectory(isDirectory) {}
 	};
 }
 
