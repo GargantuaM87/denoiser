@@ -1,9 +1,13 @@
 #include "../include/libdns/DirectoryNode.hpp"
+#include "../include/libdns/Error.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <vector>
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
+	if(!std::filesystem::exists(path))
+   	dns::Error::send("This path does not exist!");
+
 	this->path = path;
 	name = path.filename();
 
@@ -25,4 +29,12 @@ uintmax_t dns::DirectoryNode::aggregate_directory() {
 	}
 	size = directorySize;
 	return directorySize;	
+}
+
+void dns::DirectoryNode::set_dir(const dns::DirectoryNode&& other) {
+	this->name = other.name;
+	this->path = other.path;
+	this->size = other.size;
+	this->subdirectories = other.subdirectories;
+	this->files = other.files;
 }

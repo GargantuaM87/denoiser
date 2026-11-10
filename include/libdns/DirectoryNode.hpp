@@ -16,6 +16,8 @@ namespace dns {
 
 			uintmax_t aggregate_directory();
 
+			void set_dir(const DirectoryNode&& other);
+
 		   std::string g_name() const { return name; }
 		   std::filesystem::path g_path() const { return path; }	
 			std::uintmax_t g_size() const { return size; }

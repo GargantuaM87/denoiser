@@ -34,27 +34,6 @@ namespace {
 	}
 }
 
-void inspectDirectory(std::filesystem::path filePath) {
-	if(!std::filesystem::exists(filePath) or !std::filesystem::is_directory(filePath)) return;
-	std::vector<dns::FileInfo> files;
-	std::uint32_t regular_files = 0;
-	std::uint32_t directories = 0;
-
-	for(const std::filesystem::directory_entry& entry : std::filesystem::recursive_directory_iterator{filePath}) {
-		if(entry.is_regular_file()) {
-			//dns::FileInfo file{entry.path(), entry.file_size()};
-			//files.push_back(file);
-			regular_files++;
-		}
-		else if(entry.is_directory())
-			directories++;	
-	}
-
-	std::cout << "The Directory " << std::filesystem::absolute(filePath) << " has " << regular_files << " files and " << directories << " subdirectories.\n";
-   std::cout << "There is a total of " << regular_files + directories << " entries.";
-}
-
-
 void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std::string> ignoreSet) {
 
 	std::cout << prefix << root.g_name() << std::endl;
@@ -73,32 +52,41 @@ void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std
 	}
 }
 
-void build_tree_command(std::vector<std::string>& args) {
-	if(args.size() < 2) {
+void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
+	if(args.size() > 1) {
 		return;
 	}
-	std::filesystem::path path = args[1];
-	
-	if(!std::filesystem::exists(path)) {
-		dns::Error::send("This path does not exist!");
-	}
 
-	dns::DirectoryNode rootDir{path};
 	std::set<std::string> ignoreSet{".git", "build", "CMakeFiles"};
-	build_tree(rootDir, "", ignoreSet);
+	build_tree(dir, "", ignoreSet);
+}
+
+void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
+	if(args.size() == 2) {
+		std::filesystem::path path = args[1];
+
+		if(!std::filesystem::exists(path) or !std::filesystem::is_directory(path))
+			dns::Error::send("Invalid path!");
+
+		dns::DirectoryNode tempDir{path};
+	   dir.set_dir(std::move(tempDir));	
+	}
 }
 
 
-void handle_command(std::string_view line) {
+void handle_command(dns::DirectoryNode& dir, std::string_view line) {
 	auto args = split(line, ' ');
 	auto command = args[0];
 
 	if(is_prefix(command, "tree")) {
-		build_tree_command(args);
+		build_tree_command(dir, args);
+	}
+	if(is_prefix(command, "setdir")) {
+		set_directory_command(dir, args);
 	}
 }
 
-void main_loop() {
+void main_loop(dns::DirectoryNode& dir, const char** argv) {
 	char* line = nullptr;
 	while ((line = readline("dns> ")) != nullptr) {
 		std::string line_str;
@@ -116,7 +104,7 @@ void main_loop() {
 		}
 		if(!line_str.empty()) {
 			try {
-				handle_command(line_str);
+				handle_command(dir, line_str);
 			}
 			catch(const dns::Error& err) {
 				std::cout << err.what() << std::endl;
@@ -126,9 +114,10 @@ void main_loop() {
 }
 
 int main(int args, const char** argv) {
-	if(args == 1) {
+	if(args == 2) {
 		try {
-			main_loop();
+			dns::DirectoryNode dir{argv[1]};
+			main_loop(dir, argv);
 		}	
 		catch(const dns::Error& err) {
 			std::cout << err.what() << std::endl;
