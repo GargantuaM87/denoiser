@@ -1,0 +1,3 @@
+/home/ayinde-abrams/Documents/Denoiser/CMakeFiles/denoiser.dir
+/home/ayinde-abrams/Documents/Denoiser/CMakeFiles/edit_cache.dir
+/home/ayinde-abrams/Documents/Denoiser/CMakeFiles/rebuild_cache.dir
