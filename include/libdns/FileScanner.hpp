@@ -4,15 +4,21 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <vector>
 
 namespace dns {
-	struct FileInfo {
-		std::string name;
-		std::filesystem::path path;
-		std::uintmax_t size = 0;
+	class FileInfo {
+		public:
+			FileInfo(std::filesystem::path path);
 
-		FileInfo(std::string name, std::filesystem::path path, std::size_t size = 0) : name(name), path(path), size(size) {}
+			std::string g_name() const { return name; }
+			std::filesystem::path g_path() const { return path; }
+			std::uintmax_t g_size() const { return size; }
+		private:
+			std::string name;
+			std::filesystem::path path;
+			std::uintmax_t size = 0;
 	};
 }
 
