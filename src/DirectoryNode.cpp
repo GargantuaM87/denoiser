@@ -3,10 +3,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <vector>
+#include <unistd.h>
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 	if(!std::filesystem::exists(path))
    	dns::Error::send("This path does not exist!");
+	if(access(path.c_str(), R_OK) != 0)
+		dns::Error::send_errno("Has no read access!");
 
 	this->path = path;
 	name = path.filename();
@@ -17,7 +20,7 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 uintmax_t dns::DirectoryNode::aggregate_directory() {
 	std::uintmax_t directorySize = 0;
 
-	for(const auto& entry : std::filesystem::directory_iterator{path}) {
+	for(const auto& entry : std::filesystem::directory_iterator{path, std::filesystem::directory_options::skip_permission_denied}) {
 		if(entry.is_regular_file()) {
 			size += entry.file_size();
 			files.push_back({entry.path()}); 

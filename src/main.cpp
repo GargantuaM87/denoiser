@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <ios>
 #include <iostream>
 #include <filesystem>
 #include <iterator>
@@ -10,10 +11,23 @@
 #include <string_view>
 #include <tuple>
 #include <vector>
+#include <iomanip>
 #include <editline/readline.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include "../include/libdns/FileScanner.hpp"
 #include "../include/libdns/DirectoryNode.hpp"
 #include "../include/libdns/Error.hpp"
+
+#define COLORS\ 
+	X(BLACK, 30)\
+	X(RED, 31)\
+	X(GREEN, 32)\
+	X(YELLOW, 33)\ 
+	X(BLUE, 34)\
+	X(PURPLE, 35)\
+	X(CYAN, 36)\
+	X(WHITE, 37)\
 
 namespace {
 	bool is_prefix(std::string_view str, std::string_view of) {
@@ -32,9 +46,46 @@ namespace {
 		}
 		return out;
 	}
+	enum Colors : uint8_t {
+		#define X(value, a) value = (a), 
+			COLORS
+		#undef X
+	};
+
+	/*std::string ansi(std::string text, int color, int bold = 0) {
+		std::string res = fmt::format("\e[{};{}m{}\e[0m", bold, color, text);
+		return res;	
+	}*/ 
+
+	std::string humanize_size(std::uintmax_t bytes) {
+		const char* units[] = {"B", "KB", "MB", "GB", "TB"};
+		int i = 0;
+		double size = static_cast<double>(bytes);
+
+		while(size >= 1024.0 && i < 4) {
+			size /= 1024.0;
+			++i;
+		}
+
+		std::ostringstream ss;
+		ss << std::fixed << std::setprecision(i == 0 ? 0 : 1) << size << ' ' << units[i];
+		return ss.str();
+	}
 }
 
-void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std::string> ignoreSet) {
+void print_help(const std::vector<std::string>& args) {
+	if(args.size() == 1) {
+		std::cerr << R"(Available Commands:
+	tree - Commands for visualizing a directory tree
+	setdir - Commands for changing the current operated directory 
+		)";
+	}
+	else {
+		std::cerr << "No help available on that\n";
+	}
+}
+
+void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std::string> ignoreSet, bool human) {
 
 	std::cout << prefix << root.g_name() << std::endl;
 	std::string tmprefix = prefix;
@@ -43,25 +94,29 @@ void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std
 	for(const auto& entry : root.g_subdirectories()) {
 		if(ignoreSet.find(entry.g_name()) != ignoreSet.end()) continue;
 		std::cout << prefix + "|" << std::endl;
-		build_tree(entry, prefix + "|- ", ignoreSet);
+		build_tree(entry, prefix + "|- ", ignoreSet, human);
 	}
 
 	for(const auto& entry : root.g_files()) {
 		if(ignoreSet.find(entry.g_name()) != ignoreSet.end()) continue;
-		std::cout << prefix + "|- " << entry.g_name() << std::endl;
+		std::cout << prefix + "|- " << entry.g_name() << "  "  << (human ? humanize_size(entry.g_size()) : "") << std::endl;	
 	}
 }
 
 void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
-	if(args.size() > 1) {
-		return;
+	std::set<std::string> ignoreSet{".git", "build", "CMakeFiles"};
+
+	if(args.size() == 1) {
+		build_tree(dir, "", ignoreSet, false);
 	}
 
-	std::set<std::string> ignoreSet{".git", "build", "CMakeFiles"};
-	build_tree(dir, "", ignoreSet);
+	else if(is_prefix("--human", args[1]) or is_prefix("-h", args[1])) {
+		build_tree(dir, "", ignoreSet, true);
+	}
 }
 
 void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
+	// tree <path>
 	if(args.size() == 2) {
 		std::filesystem::path path = args[1];
 
@@ -81,8 +136,11 @@ void handle_command(dns::DirectoryNode& dir, std::string_view line) {
 	if(is_prefix(command, "tree")) {
 		build_tree_command(dir, args);
 	}
-	if(is_prefix(command, "setdir")) {
+	else if(is_prefix(command, "setdir")) {
 		set_directory_command(dir, args);
+	}
+	else if(is_prefix(command, "help")) {
+		print_help({args});
 	}
 }
 

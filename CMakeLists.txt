@@ -6,6 +6,7 @@ project(Denoiser
 )
 
 find_package(PkgConfig REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 pkg_check_modules(libedit REQUIRED IMPORTED_TARGET libedit)
 
 set(CMAKE_CXX_STANDARD 20)
