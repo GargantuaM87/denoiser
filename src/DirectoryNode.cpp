@@ -22,15 +22,15 @@ uintmax_t dns::DirectoryNode::aggregate_directory() {
 
 	for(const auto& entry : std::filesystem::directory_iterator{path, std::filesystem::directory_options::skip_permission_denied}) {
 		if(entry.is_regular_file()) {
-			size += entry.file_size();
+			directorySize += entry.file_size();
 			files.push_back({entry.path()}); 
 		}
 		else if(entry.is_directory()) {
 			dns::DirectoryNode directory{entry.path()};
 			subdirectories.push_back(directory);
+			directorySize += directory.g_size();
 		}
 	}
-	size = directorySize;
 	return directorySize;	
 }
 

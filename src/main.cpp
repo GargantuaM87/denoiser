@@ -62,8 +62,8 @@ namespace {
 		int i = 0;
 		double size = static_cast<double>(bytes);
 
-		while(size >= 1024.0 && i < 4) {
-			size /= 1024.0;
+		while(size >= 1000.0 && i < 4) {
+			size /= 1000.0;
 			++i;
 		}
 
@@ -86,8 +86,7 @@ void print_help(const std::vector<std::string>& args) {
 }
 
 void build_tree(const dns::DirectoryNode& root, std::string prefix, std::set<std::string> ignoreSet, bool human) {
-
-	std::cout << prefix << root.g_name() << std::endl;
+	std::cout << prefix << root.g_name() << "   " << (human ? humanize_size(root.g_size()) : "") << std::endl;
 	std::string tmprefix = prefix;
 	tmprefix = tmprefix.substr(0, tmprefix.size() - 3);
 	prefix = tmprefix + "   ";
