@@ -1,24 +1,20 @@
 #ifndef FILE_SCANNER_HPP
 #define FILE_SCANNER_HPP
 
+#include "DirectoryNode.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 
-namespace dns {
-	class FileInfo {
+namespace dns {	
+	class FileScanner {
 		public:
-			FileInfo(std::filesystem::path path);
+			FileScanner() = default;
 
-			std::string g_name() const { return name; }
-			std::filesystem::path g_path() const { return path; }
-			std::uintmax_t g_size() const { return size; }
-		private:
-			std::string name;
-			std::filesystem::path path;
-			std::uintmax_t size = 0;
+			void handle_command(DirectoryNode& dir, std::string_view line);	
 	};
 }
 

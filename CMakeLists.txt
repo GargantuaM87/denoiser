@@ -21,7 +21,7 @@ add_executable(denoiser
 
 target_include_directories(denoiser PRIVATE src)
 
-target_link_libraries(denoiser PRIVATE ${EDIT_LIBRARIES})
+target_link_libraries(denoiser PRIVATE ${EDIT_LIBRARIES} fmt::fmt)
 
 target_compile_options(denoiser PRIVATE
     -Wall
