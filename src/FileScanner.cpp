@@ -121,7 +121,9 @@ void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args)
 	else {
 		print_help({"help", "tree"});
 		return;
-	}	
+	}
+	
+	std::cout << "This directory has " << dir.g_num_directories() << " subdirectories, and " << dir.g_num_files() << " files.\n";	
 }
 
 void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {

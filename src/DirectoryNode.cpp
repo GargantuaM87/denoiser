@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <set>
+#include <system_error>
+#include <tuple>
 #include <vector>
 #include <unistd.h>
 
@@ -12,7 +14,11 @@ dns::FileInfo::FileInfo(std::filesystem::path path) {
 	}
 	name = path.filename();
 	this->path = path;
-	size = std::filesystem::file_size(path);	
+
+	if(std::filesystem::is_directory(path))
+		isDirectory = true;	
+
+	size = isDirectory ? 0 : std::filesystem::file_size(path);
 }
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
@@ -24,9 +30,10 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 		dns::Error::send("This path is not a directory!");
 
 	this->path = path;
-	name = path.filename();
+	this->name = path.filename();
+	this->size = aggregate_directory();
 
-	size = aggregate_directory();
+	flatline_contents();
 }
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path, std::set<std::string> ignoreSet) {
@@ -39,6 +46,8 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path, std::set<std::stri
 	this->name = path.filename();
 	this->ignoreSet = ignoreSet;
 	this->size = aggregate_directory();
+
+	flatline_contents();
 }
 
 uintmax_t dns::DirectoryNode::aggregate_directory() {
@@ -64,6 +73,26 @@ uintmax_t dns::DirectoryNode::aggregate_directory() {
 		}
 	}
 	return directorySize;	
+}
+
+void dns::DirectoryNode::flatline_contents() {
+	std::error_code ec;
+
+	for(const auto& entry : std::filesystem::recursive_directory_iterator{path, std::filesystem::directory_options::skip_permission_denied, ec}) {
+		if(ec)
+			dns::Error::send("Something went wrong: " + ec.message() + "\n");
+
+		if(ignoreSet.find(entry.path().filename()) != ignoreSet.end())
+			continue;
+
+		else if(entry.is_regular_file()) {
+			num_files += 1;
+		}
+		else if(entry.is_directory()) {
+			num_directories += 1;
+		}
+		children.push_back({entry.path()});
+	}
 }
 
 void dns::DirectoryNode::set_dir(const dns::DirectoryNode&& other) {
