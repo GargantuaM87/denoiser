@@ -21,6 +21,18 @@ dns::FileInfo::FileInfo(std::filesystem::path path) {
 	size = isDirectory ? 0 : std::filesystem::file_size(path);
 }
 
+dns::FileInfo::FileInfo(std::filesystem::path path, std::uintmax_t size) {
+	if(!std::filesystem::exists(path)) {
+		dns::Error::send("This path does not exist!");
+	}
+	this->name = path.filename();
+	this->path = path;
+	this->size = size;
+
+	if(std::filesystem::is_directory(path))
+		isDirectory = true;
+}
+
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 	if(!std::filesystem::exists(path))
    	dns::Error::send("This path does not exist!");
@@ -33,7 +45,7 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 	this->name = path.filename();
 	this->size = aggregate_directory();
 
-	flatline_contents();
+	this->children = flatline_contents(*this, children);
 }
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path, std::set<std::string> ignoreSet) {
@@ -47,7 +59,7 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path, std::set<std::stri
 	this->ignoreSet = ignoreSet;
 	this->size = aggregate_directory();
 
-	flatline_contents();
+	this->children = flatline_contents(*this, children);
 }
 
 uintmax_t dns::DirectoryNode::aggregate_directory() {
@@ -75,24 +87,17 @@ uintmax_t dns::DirectoryNode::aggregate_directory() {
 	return directorySize;	
 }
 
-void dns::DirectoryNode::flatline_contents() {
-	std::error_code ec;
+std::vector<dns::FileInfo> dns::DirectoryNode::flatline_contents(const dns::DirectoryNode& node, std::vector<dns::FileInfo>& children) {
 
-	for(const auto& entry : std::filesystem::recursive_directory_iterator{path, std::filesystem::directory_options::skip_permission_denied, ec}) {
-		if(ec)
-			dns::Error::send("Something went wrong: " + ec.message() + "\n");
-
-		if(ignoreSet.find(entry.path().filename()) != ignoreSet.end())
-			continue;
-
-		else if(entry.is_regular_file()) {
-			num_files += 1;
-		}
-		else if(entry.is_directory()) {
-			num_directories += 1;
-		}
-		children.push_back({entry.path()});
+	for(const auto& entry : node.g_files()) {
+		children.push_back({entry.g_path()});
 	}
+
+	for(const auto& entry : node.g_subdirectories()) {
+		children.push_back({entry.g_path(), entry.g_size()});
+	 	flatline_contents(entry, children);	
+	}
+	return children;	
 }
 
 void dns::DirectoryNode::set_dir(const dns::DirectoryNode&& other) {

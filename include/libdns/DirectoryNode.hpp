@@ -13,6 +13,7 @@ namespace dns {
 	class FileInfo {
 		public:
 			FileInfo(std::filesystem::path path);
+			FileInfo(std::filesystem::path path, std::uintmax_t size);
 
 			std::string g_name() const { return name; }
 			std::filesystem::path g_path() const { return path; }
@@ -62,7 +63,7 @@ namespace dns {
 			std::uint16_t num_files = 0;
 
 			uintmax_t aggregate_directory();
-			void flatline_contents();
+			std::vector<FileInfo> flatline_contents(const DirectoryNode& node, std::vector<FileInfo>& children);
 
 	};
 
