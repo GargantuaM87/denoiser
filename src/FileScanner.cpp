@@ -2,13 +2,16 @@
 #include "../include/libdns/Error.hpp"
 #include "../include/libdns/DirectoryNode.hpp"
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fmt/format.h>
 #include <iterator>
 #include <set>
 #include <iostream>
 #include <string_view>
+#include <type_traits>
 #include <utility>
+#include <algorithm>
 
 #define COLORS\ 
 	X(BLACK, 30)\
@@ -139,6 +142,27 @@ void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& ar
 	}
 }
 
+void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
+	std::vector<dns::FileInfo> files{dir.g_children()};
+
+	auto help = []() {
+		print_help({"help", "setdir"});
+	};
+	if(args.size() == 3) {
+		if(is_prefix(args[1], "--largest") or is_prefix(args[1], "-l")) {
+			std::uint8_t limit = std::atoi(args[2].c_str());
+
+			if(limit > args.size()) help();
+
+			std::sort(files.begin(), files.end(), [](const dns::FileInfo& a, const dns::FileInfo& b) {
+						return a.g_size() > b.g_size();
+					});
+			for(int i = 0; i < limit; i++) {
+				std::cout << ansi(files[i].g_name(), BLUE, 1) << ": " << ansi(humanize_size(files[i].g_size()), WHITE, 1) << std::endl;
+			}		
+		}
+	}	
+}
 
 void dns::FileScanner::handle_command(dns::DirectoryNode& dir, std::string_view line) {
 	auto args = split(line, ' ');
@@ -149,6 +173,9 @@ void dns::FileScanner::handle_command(dns::DirectoryNode& dir, std::string_view 
 	}
 	else if(is_prefix(command, "setdir")) {
 		set_directory_command(dir, args);
+	}
+	else if(is_prefix(command, "search")) {
+		search_command(dir, args);
 	}
 	else if(is_prefix(command, "help")) {
 		print_help({args});
