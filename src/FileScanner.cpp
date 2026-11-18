@@ -3,21 +3,23 @@
 #include "../include/libdns/DirectoryNode.hpp"
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fmt/format.h>
 #include <iterator>
-#include <set>
+#include <optional>
 #include <iostream>
+#include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <algorithm>
+#include <vector>
 
-#define COLORS\ 
+#define COLORS\
 	X(BLACK, 30)\
 	X(RED, 31)\
 	X(GREEN, 32)\
-	X(YELLOW, 33)\ 
+	X(YELLOW, 33)\
 	X(BLUE, 34)\
 	X(PURPLE, 35)\
 	X(CYAN, 36)\
@@ -125,9 +127,6 @@ void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args)
 		print_help({"help", "tree"});
 		return;
 	}
-	
-	std::cout << "This directory has " << dir.g_num_directories() << " subdirectories, and " << dir.g_num_files() << " files.\n";	
-	std::cout << dir.g_children().size() << std::endl;
 }
 
 void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
@@ -141,27 +140,66 @@ void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& ar
 		print_help({"help", "setdir"});
 	}
 }
-
+// search --largest-file 10
 void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
-	std::vector<dns::FileInfo> files{dir.g_children()};
-
+	std::vector<dns::FileInfo> files{dir.g_children()};	
 	auto help = []() {
-		print_help({"help", "setdir"});
+		print_help({"help", "search"});
 	};
-	if(args.size() == 3) {
-		if(is_prefix(args[1], "--largest") or is_prefix(args[1], "-l")) {
-			std::uint8_t limit = std::atoi(args[2].c_str());
 
-			if(limit > args.size()) help();
+	auto print_files = [](const dns::FileInfo& file) {
+		std::cout << ansi(file.g_name(), BLUE, 1) << ": " << ansi(humanize_size(file.g_size()), WHITE, 1) << std::endl;
+	};
+
+	if(args.size() == 3 or args.size() == 4) {
+		if(is_prefix(args[1], "--largest") or is_prefix(args[1], "-l")) {
+			std::uint8_t limit = 0;
+			bool filterDir = false;
+			bool filterFile = false;
+
+			if(args.size() == 3) {
+				limit = std::atoi(args[2].c_str());		
+			}
+
+			else {
+				limit = std::atoi(args[3].c_str());
+				
+				if(is_prefix(args[2], "--dir")) {
+					filterFile = true;
+				}
+				else if(is_prefix(args[2], "--file")) {
+					filterDir = true;
+				}
+				else {
+					help();
+				}
+			}
+
+			if(limit > files.size()) help();
 
 			std::sort(files.begin(), files.end(), [](const dns::FileInfo& a, const dns::FileInfo& b) {
 						return a.g_size() > b.g_size();
 					});
 			for(int i = 0; i < limit; i++) {
-				std::cout << ansi(files[i].g_name(), BLUE, 1) << ": " << ansi(humanize_size(files[i].g_size()), WHITE, 1) << std::endl;
+				dns::FileInfo& file = files[i];
+				
+				if(filterFile and !file.g_is_directory())
+					continue;
+				else if(filterDir and file.g_is_directory())
+					continue;
+
+				print_files(file);				
 			}		
 		}
 	}	
+}
+
+void test_command(dns::DirectoryNode& dir) {
+	std::vector<dns::FileInfo> files = dir.g_children();
+
+	for(const auto& file : files) {
+		std::cout << "Name: " + file.g_name() << " Size: " << file.g_size() << "Is Directory? " << file.g_is_directory() << std::endl;
+	}
 }
 
 void dns::FileScanner::handle_command(dns::DirectoryNode& dir, std::string_view line) {
@@ -176,6 +214,9 @@ void dns::FileScanner::handle_command(dns::DirectoryNode& dir, std::string_view 
 	}
 	else if(is_prefix(command, "search")) {
 		search_command(dir, args);
+	}
+	else if(is_prefix(command, "test")) {
+		test_command(dir);
 	}
 	else if(is_prefix(command, "help")) {
 		print_help({args});
