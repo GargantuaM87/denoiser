@@ -140,7 +140,7 @@ void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& ar
 		print_help({"help", "setdir"});
 	}
 }
-// search --largest-file 10
+// search --largest --file 10; search -l --dir 5
 void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
 	std::vector<dns::FileInfo> files{dir.g_children()};	
 	auto help = []() {
@@ -165,27 +165,40 @@ void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
 				limit = std::atoi(args[3].c_str());
 				
 				if(is_prefix(args[2], "--dir")) {
-					filterFile = true;
+					filterDir = true;
 				}
 				else if(is_prefix(args[2], "--file")) {
-					filterDir = true;
+					filterFile = true;
 				}
 				else {
 					help();
 				}
 			}
-
-			if(limit > files.size()) help();
+			// If the user enters a number more than the list's size, then just print out the maximum amount of contents	
+			if(limit > files.size()) limit = files.size();
 
 			std::sort(files.begin(), files.end(), [](const dns::FileInfo& a, const dns::FileInfo& b) {
 						return a.g_size() > b.g_size();
 					});
+
+			if(filterDir) {
+				std::stable_partition(files.begin(), files.end(), [](const dns::FileInfo& file) {
+						return file.g_is_directory();
+						});
+			}
+
+			else if(filterFile) {
+				std::stable_partition(files.begin(), files.end(), [](const dns::FileInfo file) {
+						return !file.g_is_directory();
+						});
+			}
+
 			for(int i = 0; i < limit; i++) {
 				dns::FileInfo& file = files[i];
-				
-				if(filterFile and !file.g_is_directory())
+
+				if(filterDir and !file.g_is_directory())
 					continue;
-				else if(filterDir and file.g_is_directory())
+				if(filterFile and file.g_is_directory())
 					continue;
 
 				print_files(file);				
