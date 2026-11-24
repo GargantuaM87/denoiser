@@ -100,10 +100,3 @@ std::vector<dns::FileInfo> dns::DirectoryNode::flatline_contents(const dns::Dire
 	return children;	
 }
 
-void dns::DirectoryNode::set_dir(const dns::DirectoryNode&& other) {
-	this->name = other.name;
-	this->path = other.path;
-	this->size = other.size;
-	this->subdirectories = other.subdirectories;
-	this->files = other.files;
-}

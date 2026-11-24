@@ -52,7 +52,7 @@ void main_loop(dns::DirectoryNode& dir, const char** argv) {
 int main(int args, const char** argv) {
 	if(args == 2) {
 		try {
-			// Make it so the user can add in their own arguments later
+			// Make it so the user can add in their own arguments later for the ignore vector
 			dns::DirectoryNode dir{argv[1], {".git", "build", "CMakeFiles"}};
 			main_loop(dir, argv);
 		}	

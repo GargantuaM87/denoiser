@@ -31,8 +31,6 @@ namespace dns {
 			DirectoryNode(std::filesystem::path path);
 			DirectoryNode(std::filesystem::path path, std::set<std::string> ignoreSet);	
 
-			void set_dir(const DirectoryNode&& other);
-
 		   std::string g_name() const { return name; }
 		   std::filesystem::path g_path() const { return path; }	
 			std::uintmax_t g_size() const { return size; }

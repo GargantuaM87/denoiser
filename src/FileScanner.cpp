@@ -132,9 +132,7 @@ void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args)
 void set_directory_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
 	if(args.size() == 2) {
 		std::filesystem::path path = args[1];
-
-		dns::DirectoryNode tempDir{path};
-	   dir.set_dir(std::move(tempDir));	
+	   dir = dns::DirectoryNode{path, {".git", "build", "CMakeFiles"}};
 	}
 	else {
 		print_help({"help", "setdir"});
