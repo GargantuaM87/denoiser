@@ -1,23 +1,20 @@
 #include "../include/libdns/FileScanner.hpp"
 #include "../include/libdns/Error.hpp"
 #include "../include/libdns/DirectoryNode.hpp"
+#include "../include/libdns/Timer.hpp"
 #include <cctype>
+#include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <filesystem>
 #include <fmt/format.h>
 #include <ios>
-#include <iterator>
-#include <optional>
 #include <iostream>
 #include <string>
 #include <string_view>
 #include <sys/types.h>
 #include <unordered_map>
-#include <utility>
 #include <algorithm>
 #include <vector>
 
@@ -115,6 +112,7 @@ void print_help(const std::vector<std::string>& args) {
 	else if(is_prefix(args[1], "setdir")) {
 		std::cerr << R"(Available Commands:
 	setdir - change the current operating directory
+	setdir <args>
 )";
 	}
 	else if(is_prefix(args[1], "search")) {
@@ -161,8 +159,7 @@ void build_tree(const dns::DirectoryNode& root, std::string prefix, bool human) 
 }
 
 void build_tree_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
-	
-
+	dns::Timer timer;	
 	if(args.size() == 1) {
 		build_tree(dir, "", false);
 	}
