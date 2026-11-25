@@ -50,10 +50,16 @@ void main_loop(dns::DirectoryNode& dir, const char** argv) {
 }
 
 int main(int args, const char** argv) {
-	if(args == 2) {
+	if(args >= 2) {
 		try {
 			// Make it so the user can add in their own arguments later for the ignore vector
-			dns::DirectoryNode dir{argv[1], {".git", "build", "CMakeFiles"}};
+			std::set<std::string> ignoreSet;
+			if(args > 2) {
+				for(int i = 2; i < args; i++) {
+					ignoreSet.insert(argv[i]);
+				}
+			}
+			dns::DirectoryNode dir{argv[1], ignoreSet};
 			main_loop(dir, argv);
 		}	
 		catch(const dns::Error& err) {
