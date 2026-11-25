@@ -50,9 +50,9 @@ dns::DirectoryNode::DirectoryNode(std::filesystem::path path) {
 
 dns::DirectoryNode::DirectoryNode(std::filesystem::path path, std::set<std::string> ignoreSet) {
 	if(!std::filesystem::exists(path))
-   	dns::Error::send("This path does not exist!");
+   	dns::Error::send("This path does not exist");
 	if(access(path.c_str(), R_OK) != 0)
-		dns::Error::send_errno("Has no read access!");
+		dns::Error::send_errno("Could not read file");
 
 	this->path = path;
 	this->name = path.filename();

@@ -12,7 +12,12 @@
 #include <tuple>
 #include <vector>
 #include <iomanip>
+#ifdef DNS_USE_READLINE
+#include <readline/history.h>
+#include <readline/readline.h>
+#else
 #include <editline/readline.h>
+#endif
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include "../include/libdns/FileScanner.hpp"
@@ -21,7 +26,7 @@
 
 
 
-void main_loop(dns::DirectoryNode& dir, const char** argv) {
+void main_loop(dns::DirectoryNode& dir) {
 	char* line = nullptr;
 	dns::FileScanner fs{};
 	while ((line = readline("dns> ")) != nullptr) {
@@ -60,7 +65,7 @@ int main(int args, const char** argv) {
 				}
 			}
 			dns::DirectoryNode dir{argv[1], ignoreSet};
-			main_loop(dir, argv);
+			main_loop(dir);
 		}	
 		catch(const dns::Error& err) {
 			std::cout << err.what() << std::endl;
@@ -68,8 +73,6 @@ int main(int args, const char** argv) {
 	}
 	return 0;
 }
-
-
 
 
 
