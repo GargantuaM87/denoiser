@@ -200,8 +200,12 @@ void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
 	};
 
 	auto print_files = [](const dns::FileInfo& file) {
-		std::cout <<  ansi(file.g_name(), BLUE, 1) << ": " << ansi(humanize_size(file.g_size()), WHITE, 1) << std::endl;
+		std::cout << file.g_path().parent_path().filename().c_str() << "/" << ansi(file.g_name(), BLUE, 1) << ": " << ansi(humanize_size(file.g_size()), WHITE, 1) << std::endl;
 	};
+
+	std::sort(files.begin(), files.end(), [](const dns::FileInfo& a, const dns::FileInfo& b) {
+			return a.g_size() > b.g_size();
+		});
 
 	if(args.size() == 3 or args.size() == 4) {
 		if(is_prefix(args[1], "--largest") or is_prefix(args[1], "-l")) {
@@ -229,10 +233,6 @@ void search_command(dns::DirectoryNode& dir, std::vector<std::string>& args) {
 			}
 			// If the user enters a number more than the list's size, then just print out the maximum amount of contents	
 			if(limit > files.size()) limit = files.size();
-
-			std::sort(files.begin(), files.end(), [](const dns::FileInfo& a, const dns::FileInfo& b) {
-						return a.g_size() > b.g_size();
-					});
 
 			if(filterDir) {
 				std::stable_partition(files.begin(), files.end(), [](const dns::FileInfo& file) {
